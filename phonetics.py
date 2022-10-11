@@ -25,6 +25,18 @@ class PhoneticWord:
     def unaligned_phonemes(self):
         return self._unaligned(self.phonemes)
 
+    @staticmethod
+    def _slice_by(parameter):
+        def slicer(self, start, stop):
+            
+            pass
+        return slicer
+
+    slice_by_grapheme = _slice_by("grapheme")
+    slice_by_phoneme = _slice_by("phoneme")
+        
+        
+
 
 with open("./alignment.json", "r") as f:
     alignment_table: List[PhoneticWord] = valmap(
