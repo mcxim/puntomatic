@@ -11,6 +11,7 @@ from phonetics import (
     get_arpabet,
     phonetic_similarity,
     phonetic_skippability,
+    alignment_table
 )
 
 model = api.load("word2vec-google-news-300")
