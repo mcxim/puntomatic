@@ -81,7 +81,7 @@ class PhoneticWord:
             list(enumerate(phonemes))[::-1],
             key=lambda pair: self._vowel_stress(pair[1]),
         )
-        return phonemes[index:]
+        return phonemes[index], phonemes[index + 1 :]
 
 
 class PhoneticDictionary(Mapping):
@@ -103,9 +103,13 @@ class PhoneticDictionary(Mapping):
 
     def pronounce(self, bit_of_language: str) -> Optional[PhoneticWord]:
         try:
-            return self._pronounce_recursive(
+            result = self._pronounce_recursive(
                 tuple(re.split("[^a-z']+", bit_of_language.lower()))
             )
+            if len(result.unaligned_phonemes) > 0:
+                return result
+            else:
+                return None
         except (IndexError, KeyError):
             return None
 
@@ -147,7 +151,7 @@ def get_arpabet(bit_of_language):
 
 def phonetic_similarity(first_phoneme, second_phoneme):
     # TODO:  make this smart
-    return 1 if first_phoneme == second_phoneme else -1
+    return 1 if first_phoneme[:2] == second_phoneme[:2] else -1
 
 
 def phonetic_skippability(phoneme):

@@ -2,7 +2,12 @@
 Shamelessly copied from slavianap's github and modified to fit our exact punning needs:
 The algorithm now is only allowed to choose paths in which at least one of the words is 
 completed, which means that matches after which both words still continue and matches
-before which both words have content are penaltied.
+before which both words have content are penaltied. In other words, the algorithm is
+prioritizing matches in which only one of the words has unmatched sounds before the
+match and only one word has unmatched sounds after the match. That way, there is a
+clear way to combine those words.
+
+The "needleman" parameter runs the algorithm as regular needleman-wunsch.
 """
 from enum import IntEnum
 import numpy as np
@@ -123,7 +128,7 @@ def smith_waterman(
         matrix[:, 0] = list(
             accumulate(
                 seq1,
-                lambda accumulated, new: accumulated + skippability(new),
+                lambda accumulated, new: accumulated - skippability(new),
                 initial=0,
             )
         )
@@ -132,14 +137,14 @@ def smith_waterman(
         matrix[0, :] = list(
             accumulate(
                 seq2,
-                lambda accumulated, new: accumulated + skippability(new),
+                lambda accumulated, new: accumulated - skippability(new),
                 initial=0,
             )
         )
         tracing_matrix[0, :] = [0] + [Trace.LEFT] * (col - 1)
 
     # Initialising the variables to find the highest scoring cell
-    max_score = -1
+    max_score = float("-inf")
     max_index = (-1, -1)
 
     # Calculating the scores for all cells in the matrix
@@ -169,7 +174,11 @@ def smith_waterman(
                 tracing_matrix[i, j] = Trace.DIAGONAL
 
             # Tracking the cell with the maximum score
-            if matrix[i, j] >= max_score and (i == row - 1 or j == col - 1):
+            if (
+                not needleman
+                and matrix[i, j] >= max_score
+                and (i == row - 1 or j == col - 1)
+            ):
                 max_index = (i, j)
                 max_score = matrix[i, j]
 
@@ -214,4 +223,9 @@ def smith_waterman(
     aligned_seq1 = aligned_seq1[::-1]
     aligned_seq2 = aligned_seq2[::-1]
 
-    return aligned_seq1, aligned_seq2, max_score, max_i, max_j
+    if needleman:
+        score = matrix[-1][-1]
+    else:
+        score = max_score
+
+    return aligned_seq1, aligned_seq2, score, max_i, max_j
