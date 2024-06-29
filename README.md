@@ -1,5 +1,7 @@
 # Puntomatic
 
+## Demonstration
+
 Running `ipython -i puntomatic.py` loads everything that we need.
 In each of the examples below, we take two words and their neighbors in the vector space, test the given matching/sequencing algorithm on the cartesian product of the similar word lists and return a list of matches, prioritized by the proximity in the vector space and the score returned by the matching/sequencing algorithm.
 
@@ -94,3 +96,20 @@ Some of the pseudowords made with the algorithm's suggestions are:
 - "onliners" (one-liners + online)
 - "sophomorequire" (sophomoric + require)
 - "progrhyming" (programming + rhyming)
+
+## Future work
+
+Currently the alrogithms is not very smart:
+
+```python
+def phonetic_similarity(first_phoneme, second_phoneme):
+    # TODO:  make this smart
+    return 1 if first_phoneme[:2] == second_phoneme[:2] else -1
+
+
+def phonetic_skippability(phoneme):
+    # TODO:  make this smart
+    return 1
+```
+
+These functions determine how the sequencing algorithms prioritize skipping/exchanging phonemes. If we make base this on real phonetic similarity, the `RhymeMatch` and `PhoneticMatch` will work much better. 
