@@ -36,10 +36,10 @@ def stress_if_vowel(phoneme: Phoneme, stresses):
 def unroll_diphthong(diphthong: Phoneme) -> Optional[List[Phoneme]]:
     new_phonemes = DIPHTHONGS[ignore_stress(diphthong)].phonemes
     assert len(new_phonemes) == 2, "Not supported"
-    decreaseing_stress = recursive_iterate(
+    decreasing_stress = recursive_iterate(
         partial(stress_add, value=-1), get_stress(diphthong)
     )
     result = []
-    result.append([stress_if_vowel(new_phonemes[0], decreaseing_stress)])
-    result.append([stress_if_vowel(new_phonemes[1], decreaseing_stress)])
+    result.append([stress_if_vowel(new_phonemes[0], decreasing_stress)])
+    result.append([stress_if_vowel(new_phonemes[1], decreasing_stress)])
     return result
