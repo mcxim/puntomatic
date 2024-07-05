@@ -22,9 +22,9 @@ Out[1]:
 ### `OrthographicMatch`
 
 Matching when parts of both words are spelt similarly.
-This means that we may be able to create a new pseudoword which satisfies one of the following:
-- The pseudoword starts with one of the origin words, ends with the other and shares some letters in the middle.
-- The pseudoword approximates one of the origin words containing the other one.
+This means that we may be able to create a new portmanteau which satisfies one of the following:
+- The portmanteau starts with one of the origin words, ends with the other and shares some letters in the middle.
+- The portmanteau approximates one of the origin words containing the other one.
 
 ```python
 In [2]: OrthographicMatch.analyze_groups(
@@ -54,7 +54,7 @@ Out[2]:
  Prioritized(value=('cobbler', 'berets', "['b', 'l', 'e', 'r'] ['b', [], 'e', 'r'] 3 0"), priority=0.9781636465137211)]
 ```
 
-Some of the pseudowords made with the algorithm's suggestions are:
+Some of the portmanteaus made with the algorithm's suggestions are:
 - "cucumberet" (cucumber + beret)
 - "sweatermelon" (watermelon + sweater)
 - "clobberet" (clobber + beret)
@@ -92,7 +92,7 @@ Out[3]:
  Prioritized(value=('lyricism', 'systems', "['S', 'IH2', 'Z', [], 'AH0', 'M'] ['S', 'IH1', 'S', 'T', 'AH0', 'M'] 4 0"), priority=0.8856206272858103)]
 ```
 
-Some of the pseudowords made with the algorithm's suggestions are:
+Some of the portmanteaus made with the algorithm's suggestions are:
 - "onliners" (one-liners + online)
 - "sophomorequire" (sophomoric + require)
 - "progrhyming" (programming + rhyming)
