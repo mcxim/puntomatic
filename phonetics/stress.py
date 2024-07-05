@@ -31,6 +31,9 @@ def strength_normalize(strength: int):
 def stress_add(stress: str, value: int) -> str:
     return STRENGTH_TO_STRESS[strength_normalize(STRESS_TO_STRENGTH[stress] + value)]
 
+def get_stress(phoneme: Phoneme) -> str:
+    return phoneme[2:]
+
 
 def vowel_strength(vowel: Phoneme) -> int:
     try:

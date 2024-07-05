@@ -45,6 +45,7 @@ class PhoneticWord:
         return instance
 
     def unroll_diphthongs(self) -> List[List[Phoneme]]:
+        idx_delta = 0
         for idx, (graphemes_chunk, phonemes_chunk) in enumerate(iter(self)):
             if (
                 len(phonemes_chunk) != 1
@@ -60,14 +61,13 @@ class PhoneticWord:
             _, split_when = DIPHTHONGS[diphthong_without_stress]
             if graphemes_chunk not in split_when:
                 continue
+            unrolled = unroll_diphthong(diphthong)
             self.graphemes, self.phonemes = (
-                self[:idx]
-                + type(self)(
-                    [[grapheme] for grapheme in graphemes_chunk],
-                    unroll_diphthong(diphthong),
-                )
-                + self[idx + 1 :]
+                self[: idx + idx_delta]
+                + type(self)([[grapheme] for grapheme in graphemes_chunk], unrolled)
+                + self[idx + idx_delta + 1 :]
             ).parts
+            idx_delta += len(unrolled) - 1
 
     @property
     def parts(self):
