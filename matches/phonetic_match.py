@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List
-from match import Match, PotentialMatch, Prioritized, MatchType
+from .match import Match, PotentialMatch, Prioritized, MatchType
 from alignment import smith_waterman
 from phonetics.phonetics import get_arpabet, phonetic_similarity, phonetic_skippability
 from operator import attrgetter
