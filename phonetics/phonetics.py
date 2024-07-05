@@ -4,8 +4,13 @@ from utils import possible_splits
 import json
 from methodtools import lru_cache
 from collections.abc import Mapping
-from .stress import vowel_strength
-from .diphthongs import DIPHTHONGS
+from .stress import (
+    vowel_strength,
+    equal_ignore_stress,
+    chunks_equal_ignore_stress,
+    ignore_stress,
+)
+from .diphthongs import DIPHTHONGS, unroll_diphthong
 from .types import Phoneme, Grapheme
 
 
@@ -14,7 +19,7 @@ class PhoneticWord:
         self,
         graphemes: List[List[Grapheme]],
         phonemes: List[List[Phoneme]],
-        unroll_them_diphthongs: bool = True,
+        unroll_them_diphthongs: bool = False,
     ):
         if len(graphemes) != len(phonemes):
             raise ValueError(
@@ -26,7 +31,7 @@ class PhoneticWord:
             self.unroll_diphthongs()
 
     @classmethod
-    def from_stored(cls, stored_graphemes: List[str], stored_phonemes: List[str]):
+    def from_stored(cls, graphemes: List[str], phonemes: List[str]):
         graphemes: List[List[Grapheme]] = [
             list(map(Grapheme, grapheme.split("|") if grapheme != "-" else []))
             for grapheme in graphemes
@@ -35,23 +40,45 @@ class PhoneticWord:
             list(map(Phoneme, phoneme.split("|") if phoneme != "_" else []))
             for phoneme in phonemes
         ]
-        return cls(graphemes, phonemes)
+        instance = cls(graphemes, phonemes)
+        instance.unroll_diphthongs()
+        return instance
 
     def unroll_diphthongs(self) -> List[List[Phoneme]]:
-        # new_phonemes = [
-        #     sum((unroll_diphthong(phoneme) for phoneme in chunk), start=[])
-        #     for chunk in self.phonemes
-        # ]
-        for idx, chunk in enumerate(self.phonemes):
-            for (phonemes, split_when) in DIPHTHONGS.values():
-                if self.graphemes[idx] in split_when:
-                    pass
+        for idx, (graphemes_chunk, phonemes_chunk) in enumerate(iter(self)):
+            if (
+                len(phonemes_chunk) != 1
+                or (
+                    diphthong_without_stress := ignore_stress(
+                        diphthong := phonemes_chunk[0]
+                    )
+                )
+                not in DIPHTHONGS.keys()
+            ):
+                # TODO: Add support for when only part is a diphthong
+                continue
+            _, split_when = DIPHTHONGS[diphthong_without_stress]
+            if graphemes_chunk not in split_when:
+                continue
+            self.graphemes, self.phonemes = (
+                self[:idx]
+                + type(self)(
+                    [[grapheme] for grapheme in graphemes_chunk],
+                    unroll_diphthong(diphthong),
+                )
+                + self[idx + 1 :]
+            ).parts
+
+    @property
+    def parts(self):
+        return (self.graphemes, self.phonemes)
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            return self.__class__(
-                self.graphemes[key], self.phonemes[key], unroll_them_diphthongs=False
-            )
+            return self.__class__(self.graphemes[key], self.phonemes[key])
+
+    def __iter__(self):
+        return zip(*self.parts)
 
     def __add__(self, other):
         if not isinstance(other, type(self)):
@@ -59,7 +86,6 @@ class PhoneticWord:
         return type(self)(
             self.graphemes + other.graphemes,
             self.phonemes + other.phonemes,
-            unroll_them_diphthongs=False,
         )
 
     def __str__(self) -> str:
@@ -169,7 +195,7 @@ def get_arpabet(bit_of_language):
 
 def phonetic_similarity(first_phoneme, second_phoneme):
     # TODO:  make this smart
-    return 1 if first_phoneme[:2] == second_phoneme[:2] else -1
+    return 1 if equal_ignore_stress(first_phoneme, second_phoneme) else -1
 
 
 def phonetic_skippability(phoneme):

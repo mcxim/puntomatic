@@ -14,7 +14,14 @@ DIPHTHONGS: Dict[Phoneme, Diphthong] = {
         phonemes=["AA", "UH"], split_when=[["o", "u"], ["a", "u"], ["o", "w"]]
     ),
     "OY": Diphthong(phonemes=["AO", "IH"], split_when=[["o", "y"], ["o", "i"]]),
+    "ER": Diphthong(phonemes=["EH", "R"], split_when=[["e", "r"]]),
 }
+
+
+def stress_if_vowel(phoneme: Phoneme, stress):
+    if phoneme in VOWELS:
+        return phoneme + stress
+    return phoneme
 
 
 def unroll_diphthong(maybe_diphthong: Phoneme) -> Optional[List[Phoneme]]:
@@ -23,6 +30,9 @@ def unroll_diphthong(maybe_diphthong: Phoneme) -> Optional[List[Phoneme]]:
     if stress.isdigit() and arpabet in DIPHTHONGS.keys():
         new_phonemes = DIPHTHONGS[arpabet].phonemes
         assert len(new_phonemes) == 2, "Not supported"
-        return [new_phonemes[0] + stress, new_phonemes[1] + stress_add(stress, -1)]
+        return [
+            [stress_if_vowel(new_phonemes[0], stress)],
+            [stress_if_vowel(new_phonemes[1], stress_add(stress, -1))]
+        ]
 
     return None

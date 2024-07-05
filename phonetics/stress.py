@@ -6,6 +6,7 @@ Vowels endings:
 """
 
 from .types import Phoneme
+from typing import List
 
 STRESS_TO_STRENGTH = {"1": 3, "2": 2, "0": 1}
 
@@ -30,5 +31,18 @@ def strength_normalize(strength: int):
 def stress_add(stress: str, value: int) -> str:
     return STRENGTH_TO_STRESS[strength_normalize(STRESS_TO_STRENGTH[stress] + value)]
 
+
 def vowel_strength(vowel: Phoneme) -> int:
-    return STRESS_TO_STRENGTH.get(vowel, 0)
+    try:
+        return STRESS_TO_STRENGTH.get(vowel[2], -1)
+    except IndexError:
+        return -1
+
+def ignore_stress(vowel: str):
+    return vowel[:2]
+
+def equal_ignore_stress(vowel1: str, vowel2: str):
+    return ignore_stress(vowel1) == ignore_stress(vowel2)
+
+def chunks_equal_ignore_stress(chunk1: List[str], chunk2: List[str]):
+    return all(map(equal_ignore_stress, chunk1, chunk2))

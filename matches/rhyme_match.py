@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import List
 from .match import Match, PotentialMatch, Prioritized, MatchType
+from phonetics.stress import equal_ignore_stress
 from phonetics.phonetics import get_arpabet
 from alignment import smith_waterman
 from operator import attrgetter
@@ -26,7 +27,7 @@ class RhymeMatch(MatchType):
             if not second_phonemes:
                 continue
             (second_stressed, second_phonemes) = second_phonemes.rhyme_ending
-            if first_stressed[:2] != second_stressed[:2]:
+            if not equal_ignore_stress(first_stressed, second_stressed):
                 continue
             (alignment_in_first, alignment_in_second, score, _, _) = smith_waterman(
                 lambda x, y: 1 if x == y else -1,
