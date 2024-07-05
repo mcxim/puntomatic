@@ -57,7 +57,6 @@ Out[2]:
 Some of the portmanteaus made with the algorithm's suggestions are:
 - "cucumberet" (cucumber + beret)
 - "sweatermelon" (watermelon + sweater)
-- "clobberet" (clobber + beret)
 - "olivery" (olive + livery)
 - "cabbadge" (cabbage + badge)
 - "emblemon" (emblem + lemon)
