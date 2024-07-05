@@ -1,6 +1,5 @@
-from orthographic_match import OrthographicMatch
-from phonetic_match import PhoneticMatch
-from rhyme_match import RhymeMatch
+from matches import OrthographicMatch, PhoneticMatch, RhymeMatch
+from phonetics.phonetics import *
 
 import gensim.downloader as api
 

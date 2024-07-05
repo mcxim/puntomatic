@@ -1,36 +1,66 @@
 from typing import NamedTuple, List, NewType, Dict, Tuple, Optional
 import re
-import functools
-from click import option
 from utils import possible_splits
-from string import ascii_lowercase
-from cytoolz import valmap
 import json
 from methodtools import lru_cache
 from collections.abc import Mapping
-from slicing import idx_deflate, idx_inflate
-
-Phoneme = NewType("Phoneme", str)
-Grapheme = NewType("Grapheme", str)
+from .stress import vowel_strength
+from .diphthongs import DIPHTHONGS
+from .types import Phoneme, Grapheme
 
 
 class PhoneticWord:
-    def __init__(self, graphemes: List[str], phonemes: List[str]):
-        self.graphemes: List[List[Grapheme]] = [
+    def __init__(
+        self,
+        graphemes: List[List[Grapheme]],
+        phonemes: List[List[Phoneme]],
+        unroll_them_diphthongs: bool = True,
+    ):
+        if len(graphemes) != len(phonemes):
+            raise ValueError(
+                "Numbers of graphemes and phonemes alignment chunks should match."
+            )
+        self.graphemes = graphemes
+        self.phonemes = phonemes
+        if unroll_them_diphthongs:
+            self.unroll_diphthongs()
+
+    @classmethod
+    def from_stored(cls, stored_graphemes: List[str], stored_phonemes: List[str]):
+        graphemes: List[List[Grapheme]] = [
             list(map(Grapheme, grapheme.split("|") if grapheme != "-" else []))
             for grapheme in graphemes
         ]
-        self.phonemes: List[List[Phoneme]] = [
+        phonemes: List[List[Phoneme]] = [
             list(map(Phoneme, phoneme.split("|") if phoneme != "_" else []))
             for phoneme in phonemes
         ]
+        return cls(graphemes, phonemes)
 
-    @classmethod
-    def from_lists(cls, graphemes: List[List[Grapheme]], phonemes: List[List[Phoneme]]):
-        new_phonecit_word = cls([], [])
-        new_phonecit_word.graphemes = graphemes
-        new_phonecit_word.phonemes = phonemes
-        return new_phonecit_word
+    def unroll_diphthongs(self) -> List[List[Phoneme]]:
+        # new_phonemes = [
+        #     sum((unroll_diphthong(phoneme) for phoneme in chunk), start=[])
+        #     for chunk in self.phonemes
+        # ]
+        for idx, chunk in enumerate(self.phonemes):
+            for (phonemes, split_when) in DIPHTHONGS.values():
+                if self.graphemes[idx] in split_when:
+                    pass
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return self.__class__(
+                self.graphemes[key], self.phonemes[key], unroll_them_diphthongs=False
+            )
+
+    def __add__(self, other):
+        if not isinstance(other, type(self)):
+            raise ValueError("Addition only possible between two PhoneticWords. ")
+        return type(self)(
+            self.graphemes + other.graphemes,
+            self.phonemes + other.phonemes,
+            unroll_them_diphthongs=False,
+        )
 
     def __str__(self) -> str:
         grapheme_line = []
@@ -47,27 +77,17 @@ class PhoneticWord:
     def unaligned_phonemes(self):
         return sum(self.phonemes, start=[])
 
-    def _slice_by(source_parameter):
-        @functools.wraps
-        def slicer(self, start, stop):
-            pass
-            # target_parameter = self.OTHER_PARAMETER[source_parameter]
-            # start_idx = idx_deflate()
+    # def _slice_by(source_parameter):
+    #     @functools.wraps
+    #     def slicer(self, start, stop):
+    #         pass
+    #         # target_parameter = self.OTHER_PARAMETER[source_parameter]
+    #         # start_idx = idx_deflate()
 
-        return slicer
+    #     return slicer
 
-    slice_by_grapheme = _slice_by("grapheme")
-    slice_by_phoneme = _slice_by("phoneme")
-
-    @staticmethod
-    def _vowel_stress(phoneme: Phoneme) -> int:
-        """
-        Vowels endings:
-         - 1 -> Primary stress
-         - 2 -> Secondary stress
-         - 0 -> No stress
-        """
-        return {"1": 3, "2": 2, "0": 1}.get(phoneme[-1], 0)
+    # slice_by_grapheme = _slice_by("grapheme")
+    # slice_by_phoneme = _slice_by("phoneme")
 
     @property
     def rhyme_ending(self):
@@ -75,11 +95,9 @@ class PhoneticWord:
         Returns the end of the word, starting at the most stressed vowel. It is the
         part that is relevant for rhyming.
         """
-        syllable_strength = {"1": 3, "2": 2, "0": 1}
         phonemes = self.unaligned_phonemes
         (index, strongest_vowel) = max(
-            list(enumerate(phonemes))[::-1],
-            key=lambda pair: self._vowel_stress(pair[1]),
+            list(enumerate(phonemes))[::-1], key=lambda pair: vowel_strength(pair[1])
         )
         return phonemes[index], phonemes[index + 1 :]
 
@@ -93,7 +111,7 @@ class PhoneticDictionary(Mapping):
         self._raw_dict = initial_dictionary
 
     def __getitem__(self, key):
-        return PhoneticWord(**self._raw_dict.__getitem__(key))
+        return PhoneticWord.from_stored(**self._raw_dict.__getitem__(key))
 
     def __iter__(self):
         return iter(self._raw_dict)
@@ -123,7 +141,7 @@ class PhoneticDictionary(Mapping):
                 pronounced_init = self.__getitem__("-".join(init))
                 pronounced_rest = self._pronounce_recursive(rest)
                 options.append(
-                    PhoneticWord.from_lists(
+                    PhoneticWord(
                         graphemes=[
                             *pronounced_init.graphemes,
                             [],
